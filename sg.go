@@ -23,7 +23,7 @@ type SelectData struct {
 
 func (sg MysqlSqlGenerator) GetSelectSql(data SelectData) (string, []interface{}, error) {
 	params := make(map[string]interface{}, 0)
-	whereParts := make([]string, len(data.Where))
+	whereParts := make([]string, 0, len(data.Where))
 
 	index := 0
 
