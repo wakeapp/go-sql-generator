@@ -2,8 +2,9 @@ package sg
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -63,35 +64,42 @@ func (d *InsertData) Add(values []string) {
 	d.ValuesList = append(d.ValuesList, rowValues{Values: values})
 }
 
+// GetInsertSql - bind params and values to sql querys
 func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}, error) {
-	params := make(map[string]interface{}, 0)
-	values := make([]string, 0, len(data.ValuesList))
+	var params = make(map[string]interface{}, 0)
+	var values = make([]string, 0, len(data.ValuesList))
 
-	index := 0
-	for _, valuesData := range data.ValuesList {
-		namedParams := make([]string, 0, len(data.ValuesList))
+	var namedParam, value, field, ignore string
+	var key, index int
+	var namedParams []string
+	var valuesData rowValues
 
-		for key, value := range valuesData.Values {
+	if len(data.ValuesList) > 0 {
+		namedParams = make([]string, 0, len(data.ValuesList[0].Values))
+	}
+
+	for _, valuesData = range data.ValuesList {
+		for key, value = range valuesData.Values {
 			index++
 
-			field := data.Fields[key]
+			field = data.Fields[key]
 
-			namedParam := getNamedParam(field, index)
+			namedParam = getNamedParam(field, index)
 			namedParams = append(namedParams, namedParam)
 
 			params[namedParam[1:]] = value
 		}
 
 		values = append(values, "("+strings.Join(namedParams, ", ")+")")
-	}
 
-	ignore := ""
+		namedParams = namedParams[:0]
+	}
 
 	if data.IsIgnore {
 		ignore = "IGNORE"
 	}
 
-	sql := fmt.Sprintf(
+	var sql = fmt.Sprintf(
 		"INSERT %s INTO %s (%s) VALUES %s",
 		ignore,
 		data.TableName,
@@ -99,9 +107,7 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 		strings.Join(values, ", "),
 	)
 
-	query, args, err := sqlx.Named(sql, params)
-
-	return query, args, err
+	return sqlx.Named(sql, params)
 }
 
 func getNamedParam(field string, index int) string {
@@ -114,43 +120,6 @@ func getNamedCondition(field string, index int) string {
 
 	return namedCondition
 }
-
-//func (sg MysqlSqlGenerator) GetUpdateSql(data UpdateData) (string, []interface{}, error) {
-//
-//	setParts := make([]string, 0, len(data.Set))
-//	whereParts := make([]string, 0, len(data.Where))
-//
-//	params := make(map[string]interface{}, 0)
-//
-//	index := 0
-//
-//	for setField, setValue := range data.Set {
-//		index++
-//
-//		namedParam := getNamedParam(setField, index)
-//
-//		setPart := getNamedCondition(setField, index)
-//		setParts = append(setParts, setPart)
-//
-//		params[namedParam[1:]] = setValue
-//	}
-//
-//	for whereField, whereValue := range data.Where {
-//		index++
-//		namedParam := getNamedParam(whereField, index)
-//
-//		wherePart := getNamedCondition(whereField, index)
-//		whereParts = append(whereParts, wherePart)
-//
-//		params[namedParam[1:]] = whereValue
-//	}
-//
-//	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE %s", data.TableName, strings.Join(setParts, ", "), strings.Join(whereParts, " AND "))
-//
-//	query, args, err := sqlx.Named(sql, params)
-//
-//	return query, args, err
-//}
 
 type updateDataList struct {
 	Set   map[string]string
@@ -268,7 +237,7 @@ func (sg MysqlSqlGenerator) GetUpsertSql(data UpsertData) (string, []interface{}
 
 	query += " ON DUPLICATE KEY UPDATE "
 
-	sqlReplaceParts := make([]string, 0)
+	sqlReplaceParts := make([]string, 0, len(data.ReplaceDataList))
 
 	for _, replaceData := range data.ReplaceDataList {
 
