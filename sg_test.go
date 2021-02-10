@@ -92,7 +92,7 @@ func TestGetInsertSQL(t *testing.T) {
 		}
 
 		if actualValuesCount := strings.Count(query, "?"); actualValuesCount != len(args) {
-			t.Fatalf("on compare values count and args: expected: %d, actual: %d", valuesCount, len(args))
+			t.Fatalf("on compare values count and args: expected: %d, actual: %d", actualValuesCount, len(args))
 		}
 
 		if valuesCount != len(args) {
