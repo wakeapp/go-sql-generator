@@ -64,7 +64,7 @@ func (d *InsertData) Add(values []string) {
 	d.ValuesList = append(d.ValuesList, rowValues{Values: values})
 }
 
-// GetInsertSql - bind params and values to sql querys
+// GetInsertSql - bind params and values to sql query
 func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}, error) {
 	var params = make(map[string]interface{}, 0)
 	var values = make([]string, 0, len(data.ValuesList))
