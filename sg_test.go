@@ -1,7 +1,6 @@
 package sg
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -208,6 +207,12 @@ func TestGetInsertSQLWithID(t *testing.T) {
 			t.Fatalf("on compare values count and args: expected: %d, actual: %d", valuesCount, len(args))
 		}
 
-		fmt.Println(dataInsert.ValuesList)
+		var previousRow rowValues
+
+		for _, v := range dataInsert.ValuesList {
+			if previousRow.ID != "" && v.ID < previousRow.ID {
+				t.Fatalf("InsertData values not sorted")
+			}
+		}
 	}
 }
