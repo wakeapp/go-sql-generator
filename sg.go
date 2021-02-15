@@ -2,6 +2,7 @@ package sg
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -47,15 +48,49 @@ func (sg MysqlSqlGenerator) GetSelectSql(data SelectData) (string, []interface{}
 
 type rowValues struct {
 	Values []string
+	ID     string
 }
 
+type rows []rowValues
+
+var _ sort.Interface = rows{}
+
+func (r rows) Len() int {
+	return len(r)
+}
+
+func (r rows) Less(i, j int) bool {
+	return r[i].ID < r[j].ID
+}
+
+func (r rows) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
+}
+
+// InsertData - data for perform insert operation
 type InsertData struct {
 	TableName  string
 	IsIgnore   bool
 	Fields     []string
-	ValuesList []rowValues
+	ValuesList rows
+	WithID     bool
 }
 
+// SetWithID - set support for row id
+func (d *InsertData) SetWithID(w bool) {
+	d.WithID = w
+}
+
+// AddWithID - add values with row id
+func (d *InsertData) AddWithID(id string, values []string) {
+	if len(d.ValuesList) == 0 {
+		d.ValuesList = make([]rowValues, 0)
+	}
+
+	d.ValuesList = append(d.ValuesList, rowValues{ID: id, Values: values})
+}
+
+// Add - add row to struct
 func (d *InsertData) Add(values []string) {
 	if len(d.ValuesList) == 0 {
 		d.ValuesList = make([]rowValues, 0)
@@ -97,6 +132,10 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 
 	if data.IsIgnore {
 		ignore = "IGNORE"
+	}
+
+	if data.WithID {
+		sort.Sort(data.ValuesList)
 	}
 
 	var sql = fmt.Sprintf(
