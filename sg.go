@@ -14,9 +14,7 @@ const (
 	CONDITION = "cond"
 )
 
-type mysqlSQLGenerator struct {
-	primaryKeyField string
-}
+type mysqlSQLGenerator struct{}
 
 // SQLGenerator - generate queries operations for defined driver
 type SQLGenerator interface {
@@ -24,8 +22,6 @@ type SQLGenerator interface {
 	GetUpdateSQL(UpdateData) (string, []interface{}, error)
 	GetUpsertSQL(UpsertData) (string, []interface{}, error)
 	GetSelectSQL(SelectData) (string, []interface{}, error)
-	SetPrimaryKeyName(string)
-	GetPrimaryKeyName() string
 }
 
 type SelectData struct {
@@ -38,22 +34,10 @@ type SelectData struct {
 func NewSQLGenerator(driver string) SQLGenerator {
 	switch strings.ToLower(driver) {
 	case "mysql":
-		return &mysqlSQLGenerator{
-			primaryKeyField: "id",
-		}
+		return mysqlSQLGenerator{}
 	default:
-		return &mysqlSQLGenerator{
-			primaryKeyField: "id",
-		}
+		return mysqlSQLGenerator{}
 	}
-}
-
-func (sg *mysqlSQLGenerator) SetPrimaryKeyName(name string) {
-	sg.primaryKeyField = strings.ToLower(name)
-}
-
-func (sg mysqlSQLGenerator) GetPrimaryKeyName() string {
-	return sg.primaryKeyField
 }
 
 func (sg mysqlSQLGenerator) GetSelectSQL(data SelectData) (string, []interface{}, error) {
@@ -102,11 +86,22 @@ func (r rows) Swap(i, j int) {
 
 // InsertData - data for perform insert operation
 type InsertData struct {
-	TableName  string
-	IsIgnore   bool
-	Fields     []string
-	ValuesList rows
-	optimize   bool
+	TableName      string
+	IsIgnore       bool
+	Fields         []string
+	ValuesList     rows
+	optimize       bool
+	primaryKeyName string
+}
+
+// SetPrimaryKeyName - set primary key field name
+func (d *InsertData) SetPrimaryKeyName(name string) {
+	d.primaryKeyName = strings.ToLower(name)
+}
+
+// GetPrimaryKeyName - get primary key field name
+func (d *InsertData) GetPrimaryKeyName() string {
+	return d.primaryKeyName
 }
 
 // SetOptimize - set support for sql optimize
@@ -148,7 +143,7 @@ func (sg mysqlSQLGenerator) GetInsertSQL(data InsertData) (string, []interface{}
 
 			field = data.Fields[key]
 
-			if data.IsOptimize() && strings.ToLower(field) == sg.GetPrimaryKeyName() {
+			if data.optimize && strings.ToLower(field) == data.primaryKeyName {
 				data.ValuesList[valuesIndex].ID = value
 			}
 
