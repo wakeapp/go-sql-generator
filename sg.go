@@ -2,6 +2,7 @@ package sg
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -13,7 +14,14 @@ const (
 	CONDITION = "cond"
 )
 
-type MysqlSqlGenerator struct {
+type mysqlSQLGenerator struct{}
+
+// SQLGenerator - generate queries operations for defined driver
+type SQLGenerator interface {
+	GetInsertSQL(InsertData) (string, []interface{}, error)
+	GetUpdateSQL(UpdateData) (string, []interface{}, error)
+	GetUpsertSQL(UpsertData) (string, []interface{}, error)
+	GetSelectSQL(SelectData) (string, []interface{}, error)
 }
 
 type SelectData struct {
@@ -22,7 +30,17 @@ type SelectData struct {
 	Where     map[string]string
 }
 
-func (sg MysqlSqlGenerator) GetSelectSql(data SelectData) (string, []interface{}, error) {
+// NewSQLGenerator - return sqlGenarator interface for provided driver
+func NewSQLGenerator(driver string) SQLGenerator {
+	switch strings.ToLower(driver) {
+	case "mysql":
+		return mysqlSQLGenerator{}
+	default:
+		return mysqlSQLGenerator{}
+	}
+}
+
+func (sg mysqlSQLGenerator) GetSelectSQL(data SelectData) (string, []interface{}, error) {
 	params := make(map[string]interface{}, 0)
 	whereParts := make([]string, 0, len(data.Where))
 
@@ -47,15 +65,63 @@ func (sg MysqlSqlGenerator) GetSelectSql(data SelectData) (string, []interface{}
 
 type rowValues struct {
 	Values []string
+	ID     string
 }
 
+type rows []rowValues
+
+var _ sort.Interface = rows{}
+
+func (r rows) Len() int {
+	return len(r)
+}
+
+func (r rows) Less(i, j int) bool {
+	return r[i].ID < r[j].ID
+}
+
+func (r rows) Swap(i, j int) {
+	r[i], r[j] = r[j], r[i]
+}
+
+// InsertData - data for perform insert operation
 type InsertData struct {
-	TableName  string
-	IsIgnore   bool
-	Fields     []string
-	ValuesList []rowValues
+	TableName      string
+	IsIgnore       bool
+	Fields         []string
+	ValuesList     rows
+	optimize       bool
+	primaryKeyName string
 }
 
+// NewInsertData - create InsertData instance
+func NewInsertData() InsertData {
+	return InsertData{
+		primaryKeyName: "id",
+	}
+}
+
+// SetPrimaryKeyName - set primary key field name
+func (d *InsertData) SetPrimaryKeyName(name string) {
+	d.primaryKeyName = strings.ToLower(name)
+}
+
+// GetPrimaryKeyName - get primary key field name
+func (d *InsertData) GetPrimaryKeyName() string {
+	return d.primaryKeyName
+}
+
+// SetOptimize - set support for sql optimize
+func (d *InsertData) SetOptimize(o bool) {
+	d.optimize = o
+}
+
+// IsOptimize - return optimize state
+func (d *InsertData) IsOptimize() bool {
+	return d.optimize
+}
+
+// Add - add row to struct
 func (d *InsertData) Add(values []string) {
 	if len(d.ValuesList) == 0 {
 		d.ValuesList = make([]rowValues, 0)
@@ -65,12 +131,12 @@ func (d *InsertData) Add(values []string) {
 }
 
 // GetInsertSql - bind params and values to sql query
-func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}, error) {
+func (sg mysqlSQLGenerator) GetInsertSQL(data InsertData) (string, []interface{}, error) {
 	var params = make(map[string]interface{}, 0)
 	var values = make([]string, 0, len(data.ValuesList))
 
 	var namedParam, value, field, ignore string
-	var key, index int
+	var key, valuesIndex, index int
 	var namedParams []string
 	var valuesData rowValues
 
@@ -78,11 +144,15 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 		namedParams = make([]string, 0, len(data.ValuesList[0].Values))
 	}
 
-	for _, valuesData = range data.ValuesList {
+	for valuesIndex, valuesData = range data.ValuesList {
 		for key, value = range valuesData.Values {
 			index++
 
 			field = data.Fields[key]
+
+			if data.optimize && strings.ToLower(field) == data.primaryKeyName {
+				data.ValuesList[valuesIndex].ID = value
+			}
 
 			namedParam = getNamedParam(field, index)
 			namedParams = append(namedParams, namedParam)
@@ -97,6 +167,10 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 
 	if data.IsIgnore {
 		ignore = "IGNORE"
+	}
+
+	if data.IsOptimize() {
+		sort.Sort(data.ValuesList)
 	}
 
 	var sql = fmt.Sprintf(
@@ -139,7 +213,7 @@ func (d *UpdateData) Add(set map[string]string, where map[string]string) {
 	d.List = append(d.List, updateDataList{Set: set, Where: where})
 }
 
-func (sg MysqlSqlGenerator) GetUpdateSql(data UpdateData) (string, []interface{}, error) {
+func (sg mysqlSQLGenerator) GetUpdateSQL(data UpdateData) (string, []interface{}, error) {
 	whereParts := make([]string, 0, len(data.List))
 
 	values := make(map[string]map[string]string, 0)
@@ -225,7 +299,7 @@ func (d *UpsertData) Add(values []string) {
 	d.ValuesList = append(d.ValuesList, rowValues{Values: values})
 }
 
-func (sg MysqlSqlGenerator) GetUpsertSql(data UpsertData) (string, []interface{}, error) {
+func (sg mysqlSQLGenerator) GetUpsertSQL(data UpsertData) (string, []interface{}, error) {
 	InsertBulkData := InsertData{
 		TableName:  data.TableName,
 		Fields:     data.Fields,
@@ -233,7 +307,7 @@ func (sg MysqlSqlGenerator) GetUpsertSql(data UpsertData) (string, []interface{}
 		IsIgnore:   false,
 	}
 
-	query, args, err := sg.GetInsertSql(InsertBulkData)
+	query, args, err := sg.GetInsertSQL(InsertBulkData)
 
 	query += " ON DUPLICATE KEY UPDATE "
 
