@@ -99,8 +99,8 @@ func (d *InsertData) Add(values []string) {
 	d.ValuesList = append(d.ValuesList, rowValues{Values: values})
 }
 
-// GetInsertSql - bind params and values to sql query
-func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}, error) {
+// GetInsertSQL - bind params and values to sql query
+func (sg MysqlSqlGenerator) GetInsertSQL(data InsertData) (string, []interface{}, error) {
 	var params = make(map[string]interface{}, 0)
 	var values = make([]string, 0, len(data.ValuesList))
 
@@ -272,7 +272,7 @@ func (sg MysqlSqlGenerator) GetUpsertSql(data UpsertData) (string, []interface{}
 		IsIgnore:   false,
 	}
 
-	query, args, err := sg.GetInsertSql(InsertBulkData)
+	query, args, err := sg.GetInsertSQL(InsertBulkData)
 
 	query += " ON DUPLICATE KEY UPDATE "
 

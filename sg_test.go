@@ -82,7 +82,7 @@ func TestGetInsertSQL(t *testing.T) {
 			valuesCount += len(values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
@@ -170,6 +170,29 @@ func TestGetInsertSQLWithID(t *testing.T) {
 				},
 			},
 		},
+		{
+			fields: []string{
+				"id",
+				"field_2",
+			},
+			valuesStack: []struct {
+				Values []string
+				ID     string
+			}{
+				{
+					Values: []string{"field_1"},
+				},
+				{
+					Values: []string{"field_5"},
+				},
+				{
+					Values: []string{"field_3"},
+				},
+				{
+					Values: []string{"field_4"},
+				},
+			},
+		},
 	}
 
 	var sqlGenerator = MysqlSqlGenerator{}
@@ -190,7 +213,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 			valuesCount += len(row.Values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
@@ -210,9 +233,11 @@ func TestGetInsertSQLWithID(t *testing.T) {
 		var previousRow rowValues
 
 		for _, v := range dataInsert.ValuesList {
-			if previousRow.ID != "" && v.ID < previousRow.ID {
+			if v.ID < previousRow.ID {
 				t.Fatalf("InsertData values not sorted")
 			}
+
+			previousRow = v
 		}
 	}
 }
