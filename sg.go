@@ -98,7 +98,6 @@ type InsertData struct {
 func NewInsertData() InsertData {
 	return InsertData{
 		primaryKeyName: "id",
-		optimize:       false,
 	}
 }
 
