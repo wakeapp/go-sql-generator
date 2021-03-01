@@ -66,7 +66,7 @@ func TestGetInsertSQL(t *testing.T) {
 		},
 	}
 
-	var sqlGenerator = MysqlSqlGenerator{}
+	var sqlGenerator = mysqlSQLGenerator{}
 	var dataInsert InsertData
 	var valuesCount int
 
@@ -203,7 +203,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 		},
 	}
 
-	var sqlGenerator = MysqlSqlGenerator{}
+	var sqlGenerator = mysqlSQLGenerator{}
 	var dataInsert InsertData
 	var valuesCount int
 
