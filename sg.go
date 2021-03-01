@@ -96,13 +96,13 @@ func (d *InsertData) Add(values []string) {
 	d.ValuesList = append(d.ValuesList, rowValues{Values: values})
 }
 
-// GetInsertSQL - bind params and values to sql query
-func (sg MysqlSqlGenerator) GetInsertSQL(data InsertData) (string, []interface{}, error) {
+// GetInsertSql - bind params and values to sql query
+func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}, error) {
 	var params = make(map[string]interface{}, 0)
 	var values = make([]string, 0, len(data.ValuesList))
 
 	var namedParam, value, field, ignore string
-	var key, index int
+	var key, valuesIndex, index int
 	var namedParams []string
 	var valuesData rowValues
 
@@ -110,12 +110,13 @@ func (sg MysqlSqlGenerator) GetInsertSQL(data InsertData) (string, []interface{}
 		namedParams = make([]string, 0, len(data.ValuesList[0].Values))
 	}
 
-	for index, valuesData = range data.ValuesList {
+	for valuesIndex, valuesData = range data.ValuesList {
 		for key, value = range valuesData.Values {
+			index++
 			field = data.Fields[key]
 
 			if data.Optimize() && strings.ToLower(field) == idField {
-				data.ValuesList[index].ID = value
+				data.ValuesList[valuesIndex].ID = value
 			}
 
 			namedParam = getNamedParam(field, index)
@@ -271,7 +272,7 @@ func (sg MysqlSqlGenerator) GetUpsertSql(data UpsertData) (string, []interface{}
 		IsIgnore:   false,
 	}
 
-	query, args, err := sg.GetInsertSQL(InsertBulkData)
+	query, args, err := sg.GetInsertSql(InsertBulkData)
 
 	query += " ON DUPLICATE KEY UPDATE "
 

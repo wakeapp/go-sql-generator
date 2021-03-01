@@ -82,7 +82,7 @@ func TestGetInsertSQL(t *testing.T) {
 			valuesCount += len(values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
@@ -221,7 +221,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 			valuesCount += len(row.Values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
