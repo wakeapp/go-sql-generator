@@ -146,6 +146,14 @@ func TestGetInsertSQLWithID(t *testing.T) {
 					Values: []string{"field_1"},
 				},
 				{
+					ID:     "88",
+					Values: []string{"field_32"},
+				},
+				{
+					ID:     "20",
+					Values: []string{"field_312"},
+				},
+				{
 					ID:     "4",
 					Values: []string{"field_4"},
 				},
@@ -209,7 +217,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 		dataInsert.SetOptimize(true)
 
 		for _, row := range test.valuesStack {
-			dataInsert.AddWithID(row.ID, row.Values)
+			dataInsert.Add(row.Values)
 			valuesCount += len(row.Values)
 		}
 

@@ -12,6 +12,7 @@ const (
 	INCREMENT = "inc"
 	DECREMENT = "dec"
 	CONDITION = "cond"
+	idField   = "id"
 )
 
 type MysqlSqlGenerator struct {
@@ -81,13 +82,9 @@ func (d *InsertData) SetOptimize(o bool) {
 	d.optimize = o
 }
 
-// AddWithID - add values with row id
-func (d *InsertData) AddWithID(id string, values []string) {
-	if len(d.ValuesList) == 0 {
-		d.ValuesList = make([]rowValues, 0)
-	}
-
-	d.ValuesList = append(d.ValuesList, rowValues{ID: id, Values: values})
+// Optimize - return optimize state
+func (d *InsertData) Optimize() bool {
+	return d.optimize
 }
 
 // Add - add row to struct
@@ -113,11 +110,13 @@ func (sg MysqlSqlGenerator) GetInsertSQL(data InsertData) (string, []interface{}
 		namedParams = make([]string, 0, len(data.ValuesList[0].Values))
 	}
 
-	for _, valuesData = range data.ValuesList {
+	for index, valuesData = range data.ValuesList {
 		for key, value = range valuesData.Values {
-			index++
-
 			field = data.Fields[key]
+
+			if data.Optimize() && strings.ToLower(field) == idField {
+				data.ValuesList[index].ID = value
+			}
 
 			namedParam = getNamedParam(field, index)
 			namedParams = append(namedParams, namedParam)
