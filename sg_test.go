@@ -66,7 +66,7 @@ func TestGetInsertSQL(t *testing.T) {
 		},
 	}
 
-	var sqlGenerator = mysqlSQLGenerator{}
+	var sqlGenerator = NewSQLGenerator("mysql")
 	var dataInsert InsertData
 	var valuesCount int
 
@@ -82,7 +82,7 @@ func TestGetInsertSQL(t *testing.T) {
 			valuesCount += len(values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
@@ -101,7 +101,7 @@ func TestGetInsertSQL(t *testing.T) {
 	}
 }
 
-func TestGetInsertSQLWithID(t *testing.T) {
+func TestGetInsertSQLWithOptimize(t *testing.T) {
 	tests := []struct {
 		name        string
 		fields      []string
@@ -203,7 +203,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 		},
 	}
 
-	var sqlGenerator = mysqlSQLGenerator{}
+	var sqlGenerator = NewSQLGenerator("mysql")
 	var dataInsert InsertData
 	var valuesCount int
 
@@ -221,7 +221,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 			valuesCount += len(row.Values)
 		}
 
-		query, args, err := sqlGenerator.GetInsertSql(dataInsert)
+		query, args, err := sqlGenerator.GetInsertSQL(dataInsert)
 		if err != nil {
 			t.Fatalf("on GetInsertSql: %s", err)
 		}
