@@ -82,8 +82,8 @@ func (d *InsertData) SetOptimize(o bool) {
 	d.optimize = o
 }
 
-// Optimize - return optimize state
-func (d *InsertData) Optimize() bool {
+// IsOptimize - return optimize state
+func (d *InsertData) IsOptimize() bool {
 	return d.optimize
 }
 
@@ -115,7 +115,7 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 			index++
 			field = data.Fields[key]
 
-			if data.Optimize() && strings.ToLower(field) == idField {
+			if data.IsOptimize() && strings.ToLower(field) == idField {
 				data.ValuesList[valuesIndex].ID = value
 			}
 
@@ -134,7 +134,7 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 		ignore = "IGNORE"
 	}
 
-	if data.optimize {
+	if data.IsOptimize() {
 		sort.Sort(data.ValuesList)
 	}
 
