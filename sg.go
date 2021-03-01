@@ -113,6 +113,7 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 	for valuesIndex, valuesData = range data.ValuesList {
 		for key, value = range valuesData.Values {
 			index++
+
 			field = data.Fields[key]
 
 			if data.IsOptimize() && strings.ToLower(field) == idField {
