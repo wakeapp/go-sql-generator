@@ -204,15 +204,16 @@ func TestGetInsertSQLWithOptimize(t *testing.T) {
 	}
 
 	var sqlGenerator = NewSQLGenerator("mysql")
-	var dataInsert InsertData
 	var valuesCount int
+
+	var dataInsert = NewInsertData()
+	dataInsert.TableName = "TestTable"
 
 	for _, test := range tests {
 		valuesCount = 0
-		dataInsert = InsertData{
-			TableName: "TestTable",
-			Fields:    test.fields,
-		}
+
+		dataInsert.ValuesList = nil
+		dataInsert.Fields = test.fields
 
 		dataInsert.SetOptimize(true)
 

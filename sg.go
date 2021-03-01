@@ -94,6 +94,14 @@ type InsertData struct {
 	primaryKeyName string
 }
 
+// NewInsertData - create InsertData instance
+func NewInsertData() InsertData {
+	return InsertData{
+		primaryKeyName: "id",
+		optimize:       false,
+	}
+}
+
 // SetPrimaryKeyName - set primary key field name
 func (d *InsertData) SetPrimaryKeyName(name string) {
 	d.primaryKeyName = strings.ToLower(name)
