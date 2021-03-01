@@ -183,7 +183,7 @@ func TestGetInsertSQLWithID(t *testing.T) {
 			Fields:    test.fields,
 		}
 
-		dataInsert.SetWithID(true)
+		dataInsert.SetOptimize(true)
 
 		for _, row := range test.valuesStack {
 			dataInsert.AddWithID(row.ID, row.Values)

@@ -73,12 +73,12 @@ type InsertData struct {
 	IsIgnore   bool
 	Fields     []string
 	ValuesList rows
-	WithID     bool
+	optimize   bool
 }
 
-// SetWithID - set support for row id
-func (d *InsertData) SetWithID(w bool) {
-	d.WithID = w
+// SetOptimize - set support for sql optimize
+func (d *InsertData) SetOptimize(o bool) {
+	d.optimize = o
 }
 
 // AddWithID - add values with row id
@@ -134,7 +134,7 @@ func (sg MysqlSqlGenerator) GetInsertSql(data InsertData) (string, []interface{}
 		ignore = "IGNORE"
 	}
 
-	if data.WithID {
+	if data.optimize {
 		sort.Sort(data.ValuesList)
 	}
 
